@@ -1,5 +1,8 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'node:lts'
+    }
 
     environment {
         DOCKER_IMAGE = "shgeeth/to-do-app"
@@ -38,18 +41,8 @@ pipeline {
                 }
             }
         }
-
-        // stage('Deploy with Terraform & Ansible') {
-        //     steps {
-        //         sh '''
-        //         cd infrastructure
-        //         terraform init
-        //         terraform apply -auto-approve
-        //         ansible-playbook -i ansible/inventory ansible/playbook.yml
-        //         '''
-        //     }
-        // }
     }
+
     post {
         success {
             echo 'Deployment Successful!'
