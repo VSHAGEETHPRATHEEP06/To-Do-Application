@@ -1,7 +1,8 @@
 pipeline {
     agent {
         docker {
-            image 'node:lts'
+            image 'node:lts' // Use the official Node.js LTS image
+        }
     }
 
     environment {
@@ -48,5 +49,4 @@ pipeline {
             echo 'Deployment Successful!'
         }
     }
-}
 }
