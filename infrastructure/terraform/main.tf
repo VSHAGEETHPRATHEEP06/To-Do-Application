@@ -1,4 +1,22 @@
-# Define the cloud provider (AWS, Azure, DigitalOcean, etc.)
+# Define the required providers
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.0"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.4"
+    }
+  }
+}
+
+# Configure the AWS provider
 provider "aws" {
   region = var.aws_region
 }
@@ -107,7 +125,7 @@ resource "tls_private_key" "todo_app_key" {
 # Save private key to file
 resource "local_file" "private_key" {
   content         = tls_private_key.todo_app_key.private_key_pem
-  filename        = "../ansible/todo_app_key.pem"
+  filename        = "${path.module}/../ansible/todo_app_key.pem"
   file_permission = "0600"
 }
 
