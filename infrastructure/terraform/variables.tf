@@ -1,13 +1,13 @@
 variable "aws_region" {
   description = "AWS region"
   type        = string
-  default     = "us-east-2"  # Changed to us-east-2 (Ohio)
+  default     = "eu-west-1"  # Changed to eu-west-1 (Ireland)
 }
 
 variable "ami_id" {
   description = "Amazon Machine Image ID"
   type        = string
-  default     = "ami-05fb0b8c1424f266b"  # Amazon Linux 2 AMI for us-east-2
+  default     = "ami-0694d931cee176e7d"  # Amazon Linux 2 AMI for eu-west-1 (Ireland)
 }
 
 variable "instance_type" {
