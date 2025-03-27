@@ -160,6 +160,9 @@ pipeline {
                             sh 'test -f inventory.ini || echo "ERROR: inventory.ini not found. Using default localhost inventory"'
                             sh 'test -f inventory.ini || echo "localhost ansible_connection=local" > inventory.ini'
                             
+                            // Set proper permissions on SSH key file if it exists
+                            sh 'test -f todo_app_key.pem && chmod 600 todo_app_key.pem || echo "SSH key not found, may have permission issues"'
+                            
                             // Create ansible.cfg file to disable host key checking
                             sh 'echo "[defaults]\nhost_key_checking = False\n[ssh_connection]\nssh_args = -o ControlMaster=auto -o ControlPersist=60s -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" > ansible.cfg'
                             

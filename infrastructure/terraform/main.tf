@@ -98,11 +98,30 @@ resource "aws_security_group" "todo_app_sg" {
   }
 }
 
+# Generate a new key pair for SSH access
+resource "tls_private_key" "todo_app_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+# Save private key to file
+resource "local_file" "private_key" {
+  content         = tls_private_key.todo_app_key.private_key_pem
+  filename        = "../ansible/todo_app_key.pem"
+  file_permission = "0600"
+}
+
+# Create AWS key pair from the generated public key
+resource "aws_key_pair" "todo_app_keypair" {
+  key_name   = "todo-app-keypair"
+  public_key = tls_private_key.todo_app_key.public_key_openssh
+}
+
 # Create EC2 instance
 resource "aws_instance" "todo_app_server" {
   ami           = var.ami_id
   instance_type = var.instance_type
-  key_name      = length(var.key_name) > 0 ? var.key_name : null
+  key_name      = aws_key_pair.todo_app_keypair.key_name
   subnet_id     = aws_subnet.todo_public_subnet.id
   vpc_security_group_ids = [aws_security_group.todo_app_sg.id]
   
@@ -110,9 +129,9 @@ resource "aws_instance" "todo_app_server" {
     Name = "todo-app-server"
   }
   
-  # Add instance IP to Ansible inventory
+  # Add instance IP to Ansible inventory with SSH key information
   provisioner "local-exec" {
-    command = "echo ${self.public_ip} ansible_user=ec2-user > ../ansible/inventory.ini"
+    command = "echo '${self.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=todo_app_key.pem' > ../ansible/inventory.ini"
   }
 }
 
