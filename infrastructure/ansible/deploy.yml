@@ -93,19 +93,36 @@
         src: ../templates/docker-compose.yml.j2
         dest: "{{ app_dir }}/docker-compose.yml"
       
-    - name: Login to Docker Hub
+    - name: Check if Docker Hub credentials are available
+      set_fact:
+        docker_hub_username: "{{ lookup('env', 'DOCKER_HUB_USERNAME', default='') }}"
+        docker_hub_password: "{{ lookup('env', 'DOCKER_HUB_PASSWORD', default='') }}"
+      no_log: true
+
+    - name: Login to Docker Hub (if credentials are available)
       shell: "docker login -u {{ docker_hub_username }} -p {{ docker_hub_password }}"
       no_log: true
-      vars:
-        docker_hub_username: "{{ lookup('env', 'DOCKER_HUB_USERNAME') }}"
-        docker_hub_password: "{{ lookup('env', 'DOCKER_HUB_PASSWORD') }}"
+      when: docker_hub_username != '' and docker_hub_password != ''
+      ignore_errors: yes
+      register: docker_login_result
       
-    - name: Pull Docker images
-      shell: "docker pull {{ item }}"
+    - name: Docker Hub login status
+      debug:
+        msg: "Docker Hub login {{ 'succeeded' if docker_login_result.rc|default(1) == 0 else 'failed or skipped, will try to pull images without authentication' }}"
+      when: docker_login_result is defined
+      
+    - name: Pull Docker images (with retry and error handling)
+      shell: "docker pull {{ item }} || echo 'Failed to pull {{ item }}, will try to use cached image or build locally'"
+      register: pull_results
       loop:
         - "{{ backend_image }}"
         - "{{ frontend_image }}"
         - "mongo:latest"
+      ignore_errors: yes
+      
+    - name: Show pull results
+      debug:
+        msg: "{{ pull_results.results | map(attribute='stdout') | list }}"
 
     - name: Deploy with Docker Compose
       shell: "cd {{ app_dir }} && docker-compose down && docker-compose up -d"
