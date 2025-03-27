@@ -194,11 +194,93 @@ resource "aws_instance" "todo_app_server" {
     fi
     
     # Ensure SSH service is running and properly configured
-    systemctl enable sshd
+    # Stop and reconfigure sshd
+    systemctl stop sshd
+    
+    # Configure sshd for better compatibility and debugging
+    cat > /etc/ssh/sshd_config <<'SSHCONFIG'
+    # Package generated configuration file
+    # See the sshd_config(5) manpage for details
+
+    # What ports, IPs and protocols we listen for
+    Port 22
+    
+    # Use these privileged separation settings
+    UsePrivilegeSeparation yes
+    
+    # Logging
+    SyslogFacility AUTH
+    LogLevel DEBUG
+    
+    # Authentication
+    LoginGraceTime 120
+    PermitRootLogin no
+    StrictModes yes
+    
+    # Allow ec2-user with SSH key
+    AllowUsers ec2-user
+    
+    # Turn on PublicKey Authentication
+    PubkeyAuthentication yes
+    
+    # Don't read the user's ~/.rhosts and ~/.shosts files
+    IgnoreRhosts yes
+    
+    # Change to yes to enable challenge-response passwords (beware issues with
+    # some PAM modules and threads)
+    ChallengeResponseAuthentication no
+    
+    # Change to yes to enable tunnelled clear text passwords
+    PasswordAuthentication yes
+    
+    X11Forwarding yes
+    X11DisplayOffset 10
+    PrintMotd no
+    PrintLastLog yes
+    TCPKeepAlive yes
+    
+    # Allow client to pass locale environment variables
+    AcceptEnv LANG LC_*
+    
+    Subsystem sftp /usr/lib/openssh/sftp-server
+    
+    # Set this to 'yes' to enable PAM authentication, account processing,
+    # and session processing. If this is enabled, PAM authentication will
+    # be allowed through the ChallengeResponseAuthentication and
+    # PasswordAuthentication.  Depending on your PAM configuration,
+    # PAM authentication via ChallengeResponseAuthentication may bypass
+    # the setting of "PermitRootLogin without-password".
+    UsePAM yes
+SSHCONFIG
+    
+    # Ensure proper permissions on .ssh directory for ec2-user
+    mkdir -p /home/ec2-user/.ssh
+    chmod 700 /home/ec2-user/.ssh
+    
+    # Add the SSH public key directly to authorized_keys
+    echo '${tls_private_key.todo_app_key.public_key_openssh}' > /home/ec2-user/.ssh/authorized_keys
+    
+    # Set proper permissions on authorized_keys
+    chmod 600 /home/ec2-user/.ssh/authorized_keys
+    chown -R ec2-user:ec2-user /home/ec2-user/.ssh
+    
+    # Start sshd with new configuration
     systemctl start sshd
-    # Allow SSH password authentication temporarily for debugging if needed
-    sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
-    systemctl restart sshd
+    systemctl enable sshd
+    
+    # Debug info
+    echo "SSH server fingerprints:" > /tmp/ssh_info.txt
+    ssh-keygen -lf /etc/ssh/ssh_host_rsa_key.pub >> /tmp/ssh_info.txt
+    ssh-keygen -lf /etc/ssh/ssh_host_ecdsa_key.pub >> /tmp/ssh_info.txt
+    ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub >> /tmp/ssh_info.txt
+    
+    # Save the authorized key for debugging
+    echo "Authorized key:" >> /tmp/ssh_info.txt
+    cat /home/ec2-user/.ssh/authorized_keys >> /tmp/ssh_info.txt
+    
+    # Get IP info for debugging
+    echo "Network information:" >> /tmp/ssh_info.txt
+    ifconfig >> /tmp/ssh_info.txt
     
     # Write a marker file to indicate user_data script completed
     echo "Initialization completed at $(date)" > /tmp/init_complete.txt

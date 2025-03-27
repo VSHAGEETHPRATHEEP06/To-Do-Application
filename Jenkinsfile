@@ -156,8 +156,8 @@ pipeline {
                     // Only proceed with Ansible if Terraform succeeded
                     try {
                         // Wait for EC2 instance to fully initialize (status checks, SSH service ready, Python installation)
-                        echo "Waiting for EC2 instance to fully initialize (120 seconds)..."
-                        sh 'sleep 120'
+                        echo "Waiting for EC2 instance to fully initialize (180 seconds)..."
+                        sh 'sleep 180'
                         
                         dir('infrastructure/ansible') {
                             // Ensure inventory.ini exists (it should be created by Terraform's local-exec provisioner)
@@ -166,15 +166,25 @@ pipeline {
                             // Debug the inventory.ini file
                             sh 'cat inventory.ini || echo "inventory.ini not found!"'
                             
+                            // Fix any quotes in the key path
+                            sh 'sed -i.bak "s/\\"//g" inventory.ini'
+                            sh 'cat inventory.ini'
+                            
+                            // Extract the IP address for manual testing
+                            sh 'IP=$(grep -oE "\\b([0-9]{1,3}\\.){3}[0-9]{1,3}\\b" inventory.ini | head -1) && echo "Server IP: $IP"'
+                            
                             // Ensure SSH key has correct permissions
                             sh 'chmod 400 todo_app_key.pem'
                             sh 'ls -la todo_app_key.pem'
                             
                             // Create ansible.cfg file to disable host key checking
-                            sh 'echo "[defaults]\nhost_key_checking = False\n[ssh_connection]\nssh_args = -o ControlMaster=auto -o ControlPersist=60s -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" > ansible.cfg'
+                            sh 'echo "[defaults]\\nhost_key_checking = False\\nprivate_key_file = todo_app_key.pem\\n[ssh_connection]\\nssh_args = -o ControlMaster=auto -o ControlPersist=60s -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" > ansible.cfg'
+                            
+                            // Attempt manual SSH connection for debugging
+                            sh 'IP=$(grep -oE "\\b([0-9]{1,3}\\.){3}[0-9]{1,3}\\b" inventory.ini | head -1) && echo "Testing SSH connection to $IP" && ssh -i todo_app_key.pem -o StrictHostKeyChecking=no -o PasswordAuthentication=no -v ec2-user@$IP "echo SSH Connection Successful" || echo "SSH connection failed, but continuing with deployment"'
                             
                             // Run Ansible deployment with improved SSH options
-                            sh '/opt/homebrew/bin/ansible-playbook -i inventory.ini deploy.yml -e "backend_image=${DOCKER_IMAGE_NAME_BACKEND}:${DOCKER_IMAGE_TAG}" -e "frontend_image=${DOCKER_IMAGE_NAME_FRONTEND}:${DOCKER_IMAGE_TAG}" --private-key=todo_app_key.pem --ssh-common-args="-o StrictHostKeyChecking=no -o ConnectTimeout=60 -o ConnectionAttempts=10" -vv'
+                            sh '/opt/homebrew/bin/ansible-playbook -i inventory.ini deploy.yml -e "backend_image=${DOCKER_IMAGE_NAME_BACKEND}:${DOCKER_IMAGE_TAG}" -e "frontend_image=${DOCKER_IMAGE_NAME_FRONTEND}:${DOCKER_IMAGE_TAG}" --private-key=todo_app_key.pem --ssh-common-args="-o StrictHostKeyChecking=no -o ConnectTimeout=60 -o ConnectionAttempts=10" -vvv'
                         }
                     } catch (Exception e) {
                         echo "ERROR during Ansible deployment: ${e.message}"
