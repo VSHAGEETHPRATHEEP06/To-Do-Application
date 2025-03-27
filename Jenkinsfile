@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
-        DOCKER_IMAGE_NAME_BACKEND = 'shgeeth/to-do-application-backend'
-        DOCKER_IMAGE_NAME_FRONTEND = 'shgeeth/to-do-application-frontend'
+        DOCKER_IMAGE_NAME_BACKEND = 'shageeth/to-do-application-backend'
+        DOCKER_IMAGE_NAME_FRONTEND = 'shageeth/to-do-application-frontend'
         DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
     }
 
