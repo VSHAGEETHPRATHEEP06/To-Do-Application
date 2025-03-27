@@ -160,8 +160,11 @@ pipeline {
                             sh 'test -f inventory.ini || echo "ERROR: inventory.ini not found. Using default localhost inventory"'
                             sh 'test -f inventory.ini || echo "localhost ansible_connection=local" > inventory.ini'
                             
-                            // Run Ansible deployment
-                            sh '/opt/homebrew/bin/ansible-playbook -i inventory.ini deploy.yml -e "backend_image=${DOCKER_IMAGE_NAME_BACKEND}:${DOCKER_IMAGE_TAG}" -e "frontend_image=${DOCKER_IMAGE_NAME_FRONTEND}:${DOCKER_IMAGE_TAG}"'
+                            // Create ansible.cfg file to disable host key checking
+                            sh 'echo "[defaults]\nhost_key_checking = False\n[ssh_connection]\nssh_args = -o ControlMaster=auto -o ControlPersist=60s -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" > ansible.cfg'
+                            
+                            // Run Ansible deployment with additional flags to handle SSH connections
+                            sh '/opt/homebrew/bin/ansible-playbook -i inventory.ini deploy.yml -e "backend_image=${DOCKER_IMAGE_NAME_BACKEND}:${DOCKER_IMAGE_TAG}" -e "frontend_image=${DOCKER_IMAGE_NAME_FRONTEND}:${DOCKER_IMAGE_TAG}" --ssh-common-args="-o StrictHostKeyChecking=no"'
                         }
                     } catch (Exception e) {
                         echo "ERROR during Ansible deployment: ${e.message}"
