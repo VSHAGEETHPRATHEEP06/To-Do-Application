@@ -6,6 +6,12 @@ pipeline {
         DOCKER_IMAGE_NAME_BACKEND = 'shageeth/to-do-application-backend'
         DOCKER_IMAGE_NAME_FRONTEND = 'shageeth/to-do-application-frontend'
         DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
+        
+        // AWS credentials
+        AWS_CREDENTIALS = credentials('aws-credentials')
+        AWS_ACCESS_KEY_ID = "${AWS_CREDENTIALS_USR}"
+        AWS_SECRET_ACCESS_KEY = "${AWS_CREDENTIALS_PSW}"
+        AWS_REGION = 'us-east-1'  // Replace with your preferred region
     }
 
     stages {
