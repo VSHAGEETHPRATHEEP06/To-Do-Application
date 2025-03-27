@@ -168,13 +168,40 @@ resource "aws_instance" "todo_app_server" {
   # Ensure we're using security group IDs only (not names) when working with VPC
   vpc_security_group_ids = var.create_new_vpc ? [aws_security_group.todo_app_sg[0].id] : [var.existing_security_group_id]
   
+  # User data script to ensure instance is ready for SSH and container deployment
+  user_data = <<-EOF
+    #!/bin/bash
+    # Update system packages
+    yum update -y
+    # Install Docker if not present
+    if ! command -v docker &> /dev/null; then
+      amazon-linux-extras install docker -y
+      systemctl enable docker
+      systemctl start docker
+    fi
+    # Ensure SSH service is running and properly configured
+    systemctl enable sshd
+    systemctl start sshd
+    # Allow SSH password authentication temporarily for debugging if needed
+    sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+    systemctl restart sshd
+  EOF
+  
   tags = {
     Name = "todo-app-server-${random_id.suffix.hex}"
   }
   
-  # Add instance IP to Ansible inventory with SSH key information
+  # Add instance IP to Ansible inventory with SSH key information and improved connection options
   provisioner "local-exec" {
-    command = "echo '${self.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=todo_app_key.pem' > ../ansible/inventory.ini"
+    command = <<-EOT
+      cat > ../ansible/inventory.ini << 'EOF'
+      [todo_servers]
+      ${self.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=todo_app_key.pem ansible_connection=ssh ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=60s' ansible_ssh_retries=5 ansible_ssh_timeout=30
+
+      [todo_servers:vars]
+      ansible_ssh_pipelining=True
+      EOF
+    EOT
   }
 }
 
