@@ -1,11 +1,13 @@
 variable "aws_region" {
   description = "AWS region"
-  default     = "us-west-2"
+  type        = string
+  default     = "us-east-2"  # Changed to us-east-2 (Ohio)
 }
 
 variable "ami_id" {
-  description = "AMI ID for EC2 instance"
-  default     = "ami-0ac64ad8517166fb1" # Amazon Linux 2 AMI for us-west-2
+  description = "Amazon Machine Image ID"
+  type        = string
+  default     = "ami-05fb0b8c1424f266b"  # Amazon Linux 2 AMI for us-east-2
 }
 
 variable "instance_type" {
