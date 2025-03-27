@@ -217,8 +217,8 @@ resource "aws_instance" "todo_app_server" {
     PermitRootLogin no
     StrictModes yes
     
-    # Allow ec2-user with SSH key
-    AllowUsers ec2-user
+    # Allow ubuntu user with SSH key
+    AllowUsers ubuntu
     
     # Turn on PublicKey Authentication
     PubkeyAuthentication yes
@@ -253,16 +253,16 @@ resource "aws_instance" "todo_app_server" {
     UsePAM yes
 SSHCONFIG
     
-    # Ensure proper permissions on .ssh directory for ec2-user
-    mkdir -p /home/ec2-user/.ssh
-    chmod 700 /home/ec2-user/.ssh
+    # Ensure proper permissions on .ssh directory for ubuntu user
+    mkdir -p /home/ubuntu/.ssh
+    chmod 700 /home/ubuntu/.ssh
     
     # Add the SSH public key directly to authorized_keys
-    echo '${tls_private_key.todo_app_key.public_key_openssh}' > /home/ec2-user/.ssh/authorized_keys
+    echo '${tls_private_key.todo_app_key.public_key_openssh}' > /home/ubuntu/.ssh/authorized_keys
     
     # Set proper permissions on authorized_keys
-    chmod 600 /home/ec2-user/.ssh/authorized_keys
-    chown -R ec2-user:ec2-user /home/ec2-user/.ssh
+    chmod 600 /home/ubuntu/.ssh/authorized_keys
+    chown -R ubuntu:ubuntu /home/ubuntu/.ssh
     
     # Start sshd with new configuration
     systemctl start sshd
@@ -276,7 +276,7 @@ SSHCONFIG
     
     # Save the authorized key for debugging
     echo "Authorized key:" >> /tmp/ssh_info.txt
-    cat /home/ec2-user/.ssh/authorized_keys >> /tmp/ssh_info.txt
+    cat /home/ubuntu/.ssh/authorized_keys >> /tmp/ssh_info.txt
     
     # Get IP info for debugging
     echo "Network information:" >> /tmp/ssh_info.txt
@@ -303,11 +303,11 @@ SSHCONFIG
       # Create Ansible inventory file
       cat > ../ansible/inventory.ini << 'EOF'
       [todo_servers]
-      ${self.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=${abspath(path.module)}/../ansible/todo_app_key.pem ansible_connection=ssh ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=60s' ansible_ssh_retries=5 ansible_ssh_timeout=30
+      ${self.public_ip} ansible_user=ubuntu ansible_ssh_private_key_file=${abspath(path.module)}/../ansible/todo_app_key.pem ansible_connection=ssh ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=60s' ansible_ssh_retries=5 ansible_ssh_timeout=30
 
       [todo_servers:vars]
       ansible_ssh_pipelining=True
-      ansible_python_interpreter=/usr/bin/python3.8
+      ansible_python_interpreter=/usr/bin/python3
       EOF
       
       # Make sure key has correct permissions
