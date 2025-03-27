@@ -161,7 +161,7 @@ pipeline {
                             sh 'test -f inventory.ini || echo "localhost ansible_connection=local" > inventory.ini'
                             
                             // Run Ansible deployment
-                            sh 'ansible-playbook -i inventory.ini deploy.yml -e "backend_image=${DOCKER_IMAGE_NAME_BACKEND}:${DOCKER_IMAGE_TAG}" -e "frontend_image=${DOCKER_IMAGE_NAME_FRONTEND}:${DOCKER_IMAGE_TAG}"'
+                            sh '/opt/homebrew/bin/ansible-playbook -i inventory.ini deploy.yml -e "backend_image=${DOCKER_IMAGE_NAME_BACKEND}:${DOCKER_IMAGE_TAG}" -e "frontend_image=${DOCKER_IMAGE_NAME_FRONTEND}:${DOCKER_IMAGE_TAG}"'
                         }
                     } catch (Exception e) {
                         echo "ERROR during Ansible deployment: ${e.message}"
