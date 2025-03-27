@@ -146,7 +146,7 @@ pipeline {
                     try {
                         dir('infrastructure/terraform') {
                             sh '/opt/homebrew/bin/terraform init'
-                            sh '/opt/homebrew/bin/terraform apply -auto-approve'
+                            sh '/opt/homebrew/bin/terraform apply -auto-approve -var="create_new_vpc=false" -var="existing_vpc_id=vpc-REPLACE_WITH_YOUR_VPC_ID" -var="existing_subnet_id=subnet-REPLACE_WITH_YOUR_SUBNET_ID" -var="existing_security_group_id=sg-REPLACE_WITH_YOUR_SG_ID"'
                         }
                     } catch (Exception e) {
                         echo "ERROR during Terraform deployment: ${e.message}"
