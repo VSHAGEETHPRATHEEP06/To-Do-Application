@@ -13,12 +13,21 @@ terraform {
       source  = "hashicorp/local"
       version = "~> 2.4"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.5"
+    }
   }
 }
 
 # Configure the AWS provider
 provider "aws" {
   region = var.aws_region
+}
+
+# Generate a random suffix to avoid naming conflicts
+resource "random_id" "suffix" {
+  byte_length = 4
 }
 
 # Create a VPC
@@ -28,7 +37,7 @@ resource "aws_vpc" "todo_vpc" {
   enable_dns_hostnames = true
   
   tags = {
-    Name = "todo-app-vpc"
+    Name = "todo-app-vpc-${random_id.suffix.hex}"
   }
 }
 
@@ -40,7 +49,7 @@ resource "aws_subnet" "todo_public_subnet" {
   availability_zone = "${var.aws_region}a"
   
   tags = {
-    Name = "todo-app-public-subnet"
+    Name = "todo-app-public-subnet-${random_id.suffix.hex}"
   }
 }
 
@@ -49,7 +58,7 @@ resource "aws_internet_gateway" "todo_igw" {
   vpc_id = aws_vpc.todo_vpc.id
   
   tags = {
-    Name = "todo-app-igw"
+    Name = "todo-app-igw-${random_id.suffix.hex}"
   }
 }
 
@@ -112,7 +121,7 @@ resource "aws_security_group" "todo_app_sg" {
   }
   
   tags = {
-    Name = "todo-app-sg"
+    Name = "todo-app-sg-${random_id.suffix.hex}"
   }
 }
 
@@ -131,7 +140,7 @@ resource "local_file" "private_key" {
 
 # Create AWS key pair from the generated public key
 resource "aws_key_pair" "todo_app_keypair" {
-  key_name   = "todo-app-keypair"
+  key_name   = "todo-app-keypair-${random_id.suffix.hex}"
   public_key = tls_private_key.todo_app_key.public_key_openssh
 }
 
@@ -144,7 +153,7 @@ resource "aws_instance" "todo_app_server" {
   vpc_security_group_ids = [aws_security_group.todo_app_sg.id]
   
   tags = {
-    Name = "todo-app-server"
+    Name = "todo-app-server-${random_id.suffix.hex}"
   }
   
   # Add instance IP to Ansible inventory with SSH key information
