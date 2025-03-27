@@ -88,8 +88,8 @@ pipeline {
                 
                 // Run Terraform to provision infrastructure
                 dir('infrastructure/terraform') {
-                    sh 'terraform init'
-                    sh 'terraform apply -auto-approve'
+                    sh '/opt/homebrew/bin/terraform init'
+                    sh '/opt/homebrew/bin/terraform apply -auto-approve'
                 }
                 
                 // Run Ansible to configure servers and deploy containers
