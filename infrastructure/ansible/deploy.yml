@@ -9,31 +9,43 @@
     app_dir: "/opt/todo-app"
   
   tasks:
-    - name: Update apt cache
+    # Amazon Linux detection
+    - name: Detect Amazon Linux
+      command: cat /etc/os-release
+      register: os_release
+      changed_when: false
+    
+    - name: Set OS facts
+      set_fact:
+        is_amazon_linux: "{{ 'Amazon Linux' in os_release.stdout }}"
+        is_debian: "{{ ansible_os_family == 'Debian' if ansible_os_family is defined else false }}"
+        is_redhat: "{{ ansible_os_family == 'RedHat' if ansible_os_family is defined else false }}"
+    
+    - name: Debug OS detection
+      debug:
+        msg: "Detected OS: {{ 'Amazon Linux' if is_amazon_linux else ansible_os_family | default('Unknown') }}"
+
+    # Package management for Debian
+    - name: Update apt cache (Debian)
       apt:
         update_cache: yes
-      when: ansible_os_family == "Debian"
-
-    - name: Update yum cache for RedHat family
-      yum:
-        update_cache: yes
-        use_backend: yum
-      when: ansible_os_family == "RedHat"
+      when: is_debian
       
-    - name: Update yum cache for Amazon Linux
+    # Package management for Amazon Linux
+    - name: Update yum cache (Amazon Linux)
       command: yum makecache
       changed_when: false
-      when: ansible_distribution == "Amazon"
+      when: is_amazon_linux
 
-    - name: Install required packages (RedHat/Amazon Linux)
-      yum:
-        name:
-          - docker
-          - python3-pip
-          - git
-        state: present
-      when: ansible_os_family == "RedHat" or ansible_distribution == "Amazon"
+    - name: Install Docker (Amazon Linux)
+      command: amazon-linux-extras install docker -y
+      when: is_amazon_linux
       
+    - name: Install Python and Git (Amazon Linux)
+      command: yum install -y python3-pip git
+      when: is_amazon_linux
+    
+    # Package management for Debian
     - name: Install required packages (Debian)
       apt:
         name:
@@ -41,16 +53,31 @@
           - python3-pip
           - git
         state: present
-      when: ansible_os_family == "Debian"
+      when: is_debian
 
+    # Package management for RedHat (non-Amazon)
+    - name: Install required packages (RedHat)
+      yum:
+        name:
+          - docker
+          - python3-pip
+          - git
+        state: present
+      when: is_redhat and not is_amazon_linux
+
+    # Common tasks for all distributions
     - name: Install Docker Compose
       get_url:
         url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}"
         dest: /usr/local/bin/docker-compose
         mode: '0755'
 
+    - name: Make docker-compose executable
+      command: chmod +x /usr/local/bin/docker-compose
+      changed_when: false
+
     - name: Start and enable Docker service
-      systemd:
+      service:
         name: docker
         state: started
         enabled: yes
