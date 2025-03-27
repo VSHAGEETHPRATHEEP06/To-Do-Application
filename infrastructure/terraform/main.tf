@@ -162,8 +162,10 @@ resource "aws_instance" "todo_app_server" {
   instance_type = var.instance_type
   key_name      = aws_key_pair.todo_app_keypair.key_name
   
-  # Use appropriate subnet and security group based on whether we're creating new infrastructure
+  # Use appropriate subnet based on whether we're creating new infrastructure
   subnet_id     = var.create_new_vpc ? aws_subnet.todo_public_subnet[0].id : var.existing_subnet_id
+  
+  # Ensure we're using security group IDs only (not names) when working with VPC
   vpc_security_group_ids = var.create_new_vpc ? [aws_security_group.todo_app_sg[0].id] : [var.existing_security_group_id]
   
   tags = {
