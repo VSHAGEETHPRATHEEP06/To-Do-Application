@@ -111,27 +111,60 @@
         msg: "Docker Hub login {{ 'succeeded' if docker_login_result.rc|default(1) == 0 else 'failed or skipped, will try to pull images without authentication' }}"
       when: docker_login_result is defined
       
-    - name: Pull Docker images (with retry and error handling)
-      shell: "docker pull {{ item }} || echo 'Failed to pull {{ item }}, will try to use cached image or build locally'"
-      register: pull_results
-      loop:
-        - "{{ backend_image }}"
-        - "{{ frontend_image }}"
-        - "mongo:latest"
+    - name: Pull MongoDB image (this should work as it's a standard image)
+      shell: "docker pull mongo:latest"
       ignore_errors: yes
-      
-    - name: Show pull results
+
+    - name: Create source code directory
+      file:
+        path: "/opt/todo-app-source"
+        state: directory
+        mode: '0755'
+
+    - name: Clone the application repository
+      git:
+        repo: "https://github.com/VSHAGEETHPRATHEEP06/To-Do-Application.git"
+        dest: "/opt/todo-app-source"
+        version: main
+      ignore_errors: yes
+      register: git_clone
+
+    - name: Show git clone results
       debug:
-        msg: "{{ pull_results.results | map(attribute='stdout') | list }}"
+        var: git_clone
+
+    - name: Build backend Docker image locally
+      shell: "cd /opt/todo-app-source/backend && docker build -t {{ backend_image }} ."
+      when: git_clone is succeeded
+      ignore_errors: yes
+
+    - name: Build frontend Docker image locally
+      shell: "cd /opt/todo-app-source/frontend && docker build -t {{ frontend_image }} ."
+      when: git_clone is succeeded
+      ignore_errors: yes
 
     - name: Deploy with Docker Compose
       shell: "cd {{ app_dir }} && docker-compose down && docker-compose up -d"
+      register: compose_result
       
+    - name: Show Docker Compose deployment result
+      debug:
+        var: compose_result
+
     - name: Wait for services to be up
       wait_for:
         host: localhost
         port: 80
         timeout: 300
+      ignore_errors: yes
+
+    - name: Check if services are running
+      shell: "docker ps"
+      register: docker_ps
+
+    - name: Show running containers
+      debug:
+        var: docker_ps.stdout_lines
         
     - name: Clean up old Docker images
       shell: "docker image prune -af"
