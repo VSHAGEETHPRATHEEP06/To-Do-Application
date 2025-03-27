@@ -15,5 +15,5 @@ variable "instance_type" {
 
 variable "key_name" {
   description = "SSH key name"
-  default     = "to-do-application"
+  default     = ""  # Set to empty so we can provide it during terraform apply
 }

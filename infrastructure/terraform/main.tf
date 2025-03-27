@@ -102,7 +102,7 @@ resource "aws_security_group" "todo_app_sg" {
 resource "aws_instance" "todo_app_server" {
   ami           = var.ami_id
   instance_type = var.instance_type
-  key_name      = var.key_name
+  key_name      = length(var.key_name) > 0 ? var.key_name : null
   subnet_id     = aws_subnet.todo_public_subnet.id
   vpc_security_group_ids = [aws_security_group.todo_app_sg.id]
   
