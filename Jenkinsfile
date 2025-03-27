@@ -161,21 +161,20 @@ pipeline {
                         
                         dir('infrastructure/ansible') {
                             // Ensure inventory.ini exists (it should be created by Terraform's local-exec provisioner)
-                            sh 'test -f inventory.ini || echo "ERROR: inventory.ini not found. Using default localhost inventory"'
-                            sh 'test -f inventory.ini || echo "localhost ansible_connection=local" > inventory.ini'
+                            sh 'ls -la'
                             
-                            // Display the inventory contents for debugging
-                            sh 'echo "Current Ansible inventory:"'
-                            sh 'cat inventory.ini'
+                            // Debug the inventory.ini file
+                            sh 'cat inventory.ini || echo "inventory.ini not found!"'
                             
-                            // Set proper permissions on SSH key file if it exists
-                            sh 'test -f todo_app_key.pem && chmod 600 todo_app_key.pem || echo "SSH key not found, may have permission issues"'
+                            // Ensure SSH key has correct permissions
+                            sh 'chmod 400 todo_app_key.pem'
+                            sh 'ls -la todo_app_key.pem'
                             
                             // Create ansible.cfg file to disable host key checking
                             sh 'echo "[defaults]\nhost_key_checking = False\n[ssh_connection]\nssh_args = -o ControlMaster=auto -o ControlPersist=60s -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" > ansible.cfg'
                             
                             // Run Ansible deployment with improved SSH options
-                            sh '/opt/homebrew/bin/ansible-playbook -i inventory.ini deploy.yml -e "backend_image=${DOCKER_IMAGE_NAME_BACKEND}:${DOCKER_IMAGE_TAG}" -e "frontend_image=${DOCKER_IMAGE_NAME_FRONTEND}:${DOCKER_IMAGE_TAG}" --ssh-common-args="-o StrictHostKeyChecking=no -o ConnectTimeout=60 -o ConnectionAttempts=10" -vv'
+                            sh '/opt/homebrew/bin/ansible-playbook -i inventory.ini deploy.yml -e "backend_image=${DOCKER_IMAGE_NAME_BACKEND}:${DOCKER_IMAGE_TAG}" -e "frontend_image=${DOCKER_IMAGE_NAME_FRONTEND}:${DOCKER_IMAGE_TAG}" --private-key=todo_app_key.pem --ssh-common-args="-o StrictHostKeyChecking=no -o ConnectTimeout=60 -o ConnectionAttempts=10" -vv'
                         }
                     } catch (Exception e) {
                         echo "ERROR during Ansible deployment: ${e.message}"

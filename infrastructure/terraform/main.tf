@@ -147,7 +147,7 @@ resource "tls_private_key" "todo_app_key" {
 resource "local_file" "private_key" {
   content         = tls_private_key.todo_app_key.private_key_pem
   filename        = "${path.module}/../ansible/todo_app_key.pem"
-  file_permission = "0600"
+  file_permission = "0400"  # More restrictive permissions
 }
 
 # Create AWS key pair from the generated public key
@@ -208,17 +208,32 @@ resource "aws_instance" "todo_app_server" {
     Name = "todo-app-server-${random_id.suffix.hex}"
   }
   
-  # Add instance IP to Ansible inventory with SSH key information and improved connection options
+  # Provisioning steps after the instance is created
   provisioner "local-exec" {
     command = <<-EOT
+      # Wait for instance to be fully ready
+      echo "Waiting for instance to initialize..."
+      sleep 30
+      
+      # Output the public IP for reference
+      echo "EC2 instance created with IP: ${self.public_ip}"
+      
+      # Create Ansible inventory file
       cat > ../ansible/inventory.ini << 'EOF'
       [todo_servers]
-      ${self.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=todo_app_key.pem ansible_connection=ssh ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=60s' ansible_ssh_retries=5 ansible_ssh_timeout=30
+      ${self.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=${abspath(path.module)}/../ansible/todo_app_key.pem ansible_connection=ssh ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=60s' ansible_ssh_retries=5 ansible_ssh_timeout=30
 
       [todo_servers:vars]
       ansible_ssh_pipelining=True
       ansible_python_interpreter=/usr/bin/python3.8
       EOF
+      
+      # Make sure key has correct permissions
+      chmod 400 ${abspath(path.module)}/../ansible/todo_app_key.pem
+      
+      # Display inventory for debugging
+      echo "Created Ansible inventory:"
+      cat ../ansible/inventory.ini
     EOT
   }
 }
