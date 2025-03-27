@@ -173,18 +173,35 @@ resource "aws_instance" "todo_app_server" {
     #!/bin/bash
     # Update system packages
     yum update -y
+    
+    # Install Python 3.8+ for Ansible compatibility
+    amazon-linux-extras enable python3.8
+    yum install -y python3.8
+    
+    # Make Python 3.8 the default python3
+    alternatives --set python3 /usr/bin/python3.8
+    python3 --version
+    
+    # Install pip for Python 3.8
+    curl -O https://bootstrap.pypa.io/get-pip.py
+    python3.8 get-pip.py
+    
     # Install Docker if not present
     if ! command -v docker &> /dev/null; then
       amazon-linux-extras install docker -y
       systemctl enable docker
       systemctl start docker
     fi
+    
     # Ensure SSH service is running and properly configured
     systemctl enable sshd
     systemctl start sshd
     # Allow SSH password authentication temporarily for debugging if needed
     sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
     systemctl restart sshd
+    
+    # Write a marker file to indicate user_data script completed
+    echo "Initialization completed at $(date)" > /tmp/init_complete.txt
   EOF
   
   tags = {
@@ -200,6 +217,7 @@ resource "aws_instance" "todo_app_server" {
 
       [todo_servers:vars]
       ansible_ssh_pipelining=True
+      ansible_python_interpreter=/usr/bin/python3.8
       EOF
     EOT
   }

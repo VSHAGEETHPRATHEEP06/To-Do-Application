@@ -155,9 +155,9 @@ pipeline {
                     
                     // Only proceed with Ansible if Terraform succeeded
                     try {
-                        // Wait for EC2 instance to fully initialize (status checks, SSH service ready)
-                        echo "Waiting for EC2 instance to fully initialize (60 seconds)..."
-                        sh 'sleep 60'
+                        // Wait for EC2 instance to fully initialize (status checks, SSH service ready, Python installation)
+                        echo "Waiting for EC2 instance to fully initialize (120 seconds)..."
+                        sh 'sleep 120'
                         
                         dir('infrastructure/ansible') {
                             // Ensure inventory.ini exists (it should be created by Terraform's local-exec provisioner)
