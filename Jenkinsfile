@@ -19,7 +19,7 @@ pipeline {
         AWS_CREDENTIALS = credentials('aws-credentials')
         AWS_ACCESS_KEY_ID = "${AWS_CREDENTIALS_USR}"
         AWS_SECRET_ACCESS_KEY = "${AWS_CREDENTIALS_PSW}"
-        AWS_REGION = 'eu-north-1'  // Replace with your preferred region
+        AWS_REGION = 'eu-west-1'  // Replace with your preferred region
     }
 
     stages {
@@ -148,16 +148,15 @@ pipeline {
                     dir('infrastructure/terraform') {
                         // Create backend.tf for S3 state storage
                         writeFile file: 'backend.tf', text: '''
-terraform {
-  backend "s3" {
-    bucket         = "todo-app-terraform-state"
-    key            = "todo-app/terraform.tfstate"
-    region         = "eu-north-1"
-    encrypt        = true
-    dynamodb_table = "todo-app-terraform-locks"
-  }
-}
-'''
+                        terraform {
+                        backend "s3" {
+                            bucket         = "todo-app-terraform-state1"
+                            key            = "terraform.tfstate"
+                            region         = "eu-west-1"
+                            encrypt        = true
+                        }
+                        }
+                        '''
                     }
                 }
             }
