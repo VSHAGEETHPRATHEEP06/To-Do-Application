@@ -19,7 +19,7 @@ pipeline {
         AWS_CREDENTIALS = credentials('aws-credentials')
         AWS_ACCESS_KEY_ID = "${AWS_CREDENTIALS_USR}"
         AWS_SECRET_ACCESS_KEY = "${AWS_CREDENTIALS_PSW}"
-        AWS_REGION = 'us-east-1'  // Replace with your preferred region
+        AWS_REGION = 'eu-north-1'  // Replace with your preferred region
     }
 
     stages {
@@ -152,7 +152,7 @@ terraform {
   backend "s3" {
     bucket         = "todo-app-terraform-state"
     key            = "todo-app/terraform.tfstate"
-    region         = "us-east-1"
+    region         = "eu-north-1"
     encrypt        = true
     dynamodb_table = "todo-app-terraform-locks"
   }
