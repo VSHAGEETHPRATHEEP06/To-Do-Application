@@ -1,6 +1,14 @@
 pipeline {
     agent any
 
+    parameters {
+        booleanParam(name: 'SKIP_CLEANUP', defaultValue: true, description: 'Skip infrastructure cleanup after deployment')
+    }
+    
+    triggers {
+        githubPush()
+    }
+
     environment {
         DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
         DOCKER_IMAGE_NAME_BACKEND = 'shageeth/to-do-application-backend'
@@ -134,6 +142,27 @@ pipeline {
             }
         }
 
+        stage('Initialize Terraform Backend') {
+            steps {
+                script {
+                    dir('infrastructure/terraform') {
+                        // Create backend.tf for S3 state storage
+                        writeFile file: 'backend.tf', text: '''
+terraform {
+  backend "s3" {
+    bucket         = "todo-app-terraform-state"
+    key            = "todo-app/terraform.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+    dynamodb_table = "todo-app-terraform-locks"
+  }
+}
+'''
+                    }
+                }
+            }
+        }
+
         stage('Deploy to Environment') {
             steps {
                 echo 'Deploying to environment using Terraform and Ansible...'
@@ -193,12 +222,44 @@ pipeline {
                 }
             }
         }
+        
+        stage('Display Application URL') {
+            steps {
+                dir('infrastructure/ansible') {
+                    script {
+                        sh '''
+                        IP=$(grep -oE "\\b([0-9]{1,3}\\.){3}[0-9]{1,3}\\b" inventory.ini | head -1)
+                        echo "********************************************"
+                        echo "* Application URL: http://$IP              *"
+                        echo "* Your Todo application is now accessible! *"
+                        echo "********************************************"
+                        '''
+                    }
+                }
+            }
+        }
     }
 
     post {
         always {
             sh 'docker logout'
             cleanWs()
+            
+            script {
+                if (!params.SKIP_CLEANUP) {
+                    echo "Cleaning up infrastructure as SKIP_CLEANUP is set to false"
+                    try {
+                        dir('infrastructure/terraform') {
+                            sh '/opt/homebrew/bin/terraform destroy -auto-approve'
+                        }
+                    } catch (Exception e) {
+                        echo "WARNING: Failed to destroy infrastructure: ${e.message}"
+                    }
+                } else {
+                    echo "Skipping infrastructure cleanup as SKIP_CLEANUP is set to true"
+                    echo "The application remains deployed and accessible in AWS"
+                }
+            }
         }
         success {
             echo 'Pipeline completed successfully!'
