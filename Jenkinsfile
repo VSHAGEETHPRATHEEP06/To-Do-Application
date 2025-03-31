@@ -150,7 +150,7 @@ pipeline {
                         writeFile file: 'backend.tf', text: '''
                         terraform {
                         backend "s3" {
-                            bucket         = "todo-app-terraform-state1"
+                            bucket         = "todo-app-terraform-state2"
                             key            = "terraform.tfstate"
                             region         = "ap-southeast-1"
                             encrypt        = true
