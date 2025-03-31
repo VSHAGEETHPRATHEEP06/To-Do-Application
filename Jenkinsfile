@@ -194,6 +194,19 @@ pipeline {
                             // Debug the inventory.ini file
                             sh 'cat inventory.ini || echo "inventory.ini not found!"'
                             
+                            // Create inventory.ini file if it doesn't exist
+                            sh '''
+                            if [ ! -f inventory.ini ]; then
+                                echo "Creating inventory.ini file manually..."
+                                echo "[todo_servers]" > inventory.ini
+                                echo "13.250.16.170 ansible_user=ubuntu ansible_ssh_private_key_file=todo_app_key.pem ansible_connection=ssh ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=60s' ansible_ssh_retries=5 ansible_ssh_timeout=30" >> inventory.ini
+                                echo "" >> inventory.ini
+                                echo "[todo_servers:vars]" >> inventory.ini
+                                echo "ansible_ssh_pipelining=True" >> inventory.ini
+                                echo "ansible_python_interpreter=/usr/bin/python3" >> inventory.ini
+                            fi
+                            '''
+                            
                             // Fix any quotes in the key path
                             sh 'sed -i.bak "s/\\"//g" inventory.ini'
                             sh 'cat inventory.ini'
