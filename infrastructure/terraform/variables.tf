@@ -1,13 +1,13 @@
 variable "aws_region" {
   description = "AWS region"
   type        = string
-  default     = "eu-west-1"  # Changed to eu-west-1 (Ireland)
+  default     = "ap-southeast-1"  # Changed to ap-southeast-1 (Singapore)
 }
 
 variable "ami_id" {
   description = "Amazon Machine Image ID"
   type        = string
-  default     = "ami-0905a3c97561e0b69"  # Ubuntu 22.04 LTS AMI for eu-west-1 (Ireland)
+  default     = "ami-078c1149d8ad719a7"  # Ubuntu 22.04 LTS AMI for ap-southeast-1 (Singapore)
 }
 
 variable "instance_type" {

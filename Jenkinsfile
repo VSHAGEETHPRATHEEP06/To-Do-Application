@@ -19,7 +19,7 @@ pipeline {
         AWS_CREDENTIALS = credentials('aws-credentials')
         AWS_ACCESS_KEY_ID = "${AWS_CREDENTIALS_USR}"
         AWS_SECRET_ACCESS_KEY = "${AWS_CREDENTIALS_PSW}"
-        AWS_REGION = 'eu-west-1'  // Replace with your preferred region
+        AWS_REGION = 'ap-southeast-1'  // Changed to Singapore region
     }
 
     stages {
@@ -152,7 +152,7 @@ pipeline {
                         backend "s3" {
                             bucket         = "todo-app-terraform-state1"
                             key            = "terraform.tfstate"
-                            region         = "eu-west-1"
+                            region         = "ap-southeast-1"
                             encrypt        = true
                         }
                         }
