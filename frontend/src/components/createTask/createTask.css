@@ -1,3 +1,84 @@
 .toast{
     display: none;
 }
+
+/* Form entrance animation */
+.fade-in-slide-up {
+    animation: fadeInSlideUp 0.6s ease-out forwards;
+}
+
+@keyframes fadeInSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Pulse animation when submitting */
+.pulse-once {
+    animation: pulseOnce 0.5s ease;
+}
+
+@keyframes pulseOnce {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(99, 102, 241, 0);
+    }
+    50% {
+        transform: scale(0.98);
+        box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(99, 102, 241, 0);
+    }
+}
+
+/* Success flash animation */
+.success-flash {
+    animation: successFlash 1s ease;
+}
+
+@keyframes successFlash {
+    0% {
+        background-color: rgba(16, 185, 129, 0);
+    }
+    30% {
+        background-color: rgba(16, 185, 129, 0.1);
+    }
+    100% {
+        background-color: rgba(16, 185, 129, 0);
+    }
+}
+
+/* Toast animation */
+.animate-toast-in {
+    animation: toastIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards,
+               toastOut 0.5s ease-out forwards 2.5s;
+}
+
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 20px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+@keyframes toastOut {
+    from {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+    to {
+        opacity: 0;
+        transform: translate(-50%, -20px);
+    }
+}

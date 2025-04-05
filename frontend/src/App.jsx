@@ -1,5 +1,5 @@
 import './App.css';
-import { useEffect, useReducer } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Active from './components/Active';
 import Completed from './components/Completed';
@@ -19,31 +19,31 @@ function App() {
   const [tasks, dispatch] = useReducer(taskReducer, [])
   const [userToken, tokenDispatch] = useReducer(tokenReducer, token)
   const [user, userDispatch] = useReducer(userReducer, {})
+  const [isLoading, setIsLoading] = useState(true)
   useEffect(() => {
-    console.log("App.js");
     const fetchUser = async () => {
       try {
-        console.log("fetchUser");
         const res = await axios.get("/user/getUser",{
           headers: {
             Authorization: `Bearer ${userToken}`
           }
         })
-        //tokenDispatch({type: "SET_TOKEN", payload: res.token})
-        console.log("res.data: ", res.data);
         userDispatch({type: "SET_USER", payload:res.data.user})
       } catch (error) {
         console.log(error);
+      } finally {
+        setIsLoading(false);
       }
     }
     if (userToken) {
       fetchUser()
+    } else {
+      setIsLoading(false);
     }
   },[userToken])
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        console.log("fetchTasks");
         const res = await axios.get("/task/getTask", {
           headers: {
             Authorization: `Bearer ${userToken}`
@@ -58,25 +58,37 @@ function App() {
       fetchTasks()
     }
   },[userToken])
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+        <div className="bg-white p-8 rounded-lg shadow-2xl flex flex-col items-center">
+          <div className="w-16 h-16 border-t-4 border-b-4 border-indigo-600 rounded-full animate-spin mb-4"></div>
+          <h2 className="text-2xl font-semibold text-gray-800">Loading your tasks...</h2>
+          <p className="text-gray-500 mt-2">Please wait while we prepare your workspace</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <BrowserRouter>
       <TokenContext.Provider value={{userToken, tokenDispatch, user, userDispatch}}>
         <TaskContext.Provider value={{ tasks, dispatch }}>
-          <Routes>
-            <Route path="/" element={<Header />}>
-              <Route path='/' element={token ? <Layout /> : <Login />}>
-                <Route index element={<AllTask />} />
-                <Route path="active" element={<Active />} />
-                <Route path="completed" element={<Completed />} />
+          <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 text-gray-900">
+            <Routes>
+              <Route path="/" element={<Header />}>
+                <Route path='/' element={token ? <Layout /> : <Login />}>
+                  <Route index element={<AllTask />} />
+                  <Route path="active" element={<Active />} />
+                  <Route path="completed" element={<Completed />} />
+                </Route>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
               </Route>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              
-            </Route>
-          </Routes>
+            </Routes>
+          </div>
         </TaskContext.Provider>
       </TokenContext.Provider>
-
     </BrowserRouter>
   );
 }

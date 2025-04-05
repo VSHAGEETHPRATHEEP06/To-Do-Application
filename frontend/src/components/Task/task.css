@@ -2,3 +2,90 @@
     text-justify: distribute;
     word-wrap: break-word;
 }
+
+/* Task card animations */
+.slide-in-task {
+    animation: slideInTask 0.4s ease-out forwards;
+}
+
+@keyframes slideInTask {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Task exit animation */
+.task-exit {
+    animation: fadeOutRight 0.3s ease-in forwards;
+}
+
+@keyframes fadeOutRight {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+}
+
+/* Checkbox animations */
+.checkbox-wrapper {
+    position: relative;
+}
+
+.custom-checkbox {
+    transition: all 0.2s ease;
+}
+
+.custom-checkbox:after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background-color: rgba(79, 70, 229, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease;
+}
+
+.custom-checkbox:active:after {
+    width: 35px;
+    height: 35px;
+}
+
+/* Pulse effect when marking done */
+.task-pulse {
+    animation: taskPulse 0.5s ease;
+}
+
+@keyframes taskPulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(0.98);
+        background-color: rgba(79, 70, 229, 0.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Hover lift effect for tasks */
+.hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}

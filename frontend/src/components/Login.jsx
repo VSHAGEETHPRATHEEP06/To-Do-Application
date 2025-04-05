@@ -77,7 +77,7 @@ function Login() {
                                     <button
                                         type="submit"
                                         onClick={handleSubmit}
-                                        className="inline-block w-full px-7 py-2 bg-black text-white font-medium text-sm leading-snug uppercase rounded-3xl shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out">
+                                        className="inline-block w-full px-7 py-2 bg-blue-600 text-white font-medium text-sm leading-snug uppercase rounded-3xl shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out">
                                         Login
                                     </button>
                                     <p className="text-sm font-semibold mt-2 pt-1 mb-0">
